@@ -1,67 +1,39 @@
-package main
+import yaml
+from git import Repo
 
-import (
-	"fmt"
-	"os"
-	"os/exec"
-	"strings"
+def main():
+    repo = Repo(".")
+    changed_files = repo.git.diff("origin/main...HEAD", name_only=True).split('\n')
 
-	"gopkg.in/yaml.v2"
-)
+    for file in changed_files:
+        if file.endswith('.yaml'):
+            check_epoch_increment(file)
 
-type Package struct {
-	Name    string `yaml:"name"`
-	Version string `yaml:"version"`
-	Epoch   int    `yaml:"epoch"`
-}
+def check_epoch_increment(file):
+    repo = Repo(".")
 
-type Document struct {
-	Package Package `yaml:"package"`
-}
+    old_content = repo.git.show(f"origin/main:{file}")
+    new_content = repo.git.show(f"HEAD:{file}")
 
-func main() {
-	// get changed files
-	out, err := exec.Command("git", "diff", "--name-only", "origin/main...HEAD").Output()
-	if err != nil {
-		fmt.Println("Failed to get changed files")
-		os.Exit(1)
-	}
+    old_yaml = yaml.safe_load(old_content)
+    new_yaml = yaml.safe_load(new_content)
 
-	files := strings.Split(string(out), "\n")
+    old_package = old_yaml.get('package', {})
+    new_package = new_yaml.get('package', {})
 
-	for _, file := range files {
-		if strings.HasSuffix(file, ".yaml") {
-			checkEpochIncrement(file)
-		}
-	}
-}
+    old_epoch = old_package.get('epoch')
+    new_epoch = new_package.get('epoch')
 
-func checkEpochIncrement(filename string) {
-	oldContent, _ := exec.Command("git", "show", fmt.Sprintf("origin/main:%s", filename)).Output()
-	newContent, _ := exec.Command("git", "show", fmt.Sprintf("HEAD:%s", filename)).Output()
+    old_version = old_package.get('version')
+    new_version = new_package.get('version')
 
-	var oldDoc, newDoc Document
+    if old_version != new_version:
+        return
 
-	err := yaml.Unmarshal(oldContent, &oldDoc)
-	if err != nil {
-		fmt.Printf("Error parsing YAML file: %s\n", err)
-		os.Exit(1)
-	}
+    if old_epoch is not None and new_epoch is not None and new_epoch != old_epoch + 1:
+        print(f"The package.epoch in {file} should probably be incremented by one.")
+        exit(1)
 
-	err = yaml.Unmarshal(newContent, &newDoc)
-	if err != nil {
-		fmt.Printf("Error parsing YAML file: %s\n", err)
-		os.Exit(1)
-	}
-
-	if oldDoc.Package.Version != newDoc.Package.Version {
-		// If the version has changed, we don't require the epoch to be incremented
-		return
-	}
-
-	if oldDoc.Package.Epoch+1 != newDoc.Package.Epoch {
-		fmt.Printf("The package.epoch in %s should probably be incremented by one.\n", filename)
-		os.Exit(1)
-	}
-}
+if __name__ == "__main__":
+    main()
 
