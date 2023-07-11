@@ -1,0 +1,28 @@
+---
+name: Check package.epoch increment
+
+on:
+  pull_request:
+    paths:
+      - "*.yaml"
+
+jobs:
+  epoch-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # Fetch all history for all branches and tags
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: pip install pyyaml gitpython
+
+      - name: Check package.epoch increment
+        run: python .github/workflows/check_epoch.py
