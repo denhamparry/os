@@ -1,6 +1,6 @@
 package:
   name: kots
-  version: 1.100.3
+  version: 1.100.4
   epoch: 0
   description: Kubernetes Off-The-Shelf (KOTS) Software
   copyright:
