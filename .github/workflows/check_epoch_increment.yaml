@@ -3,6 +3,7 @@ name: Check package.epoch increment
 
 on:
   pull_request:
+    branches: [ "main" ]
     paths:
       - "*.yaml"
 
