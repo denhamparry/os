@@ -11,8 +11,13 @@ def main():
 
 def check_epoch_increment(file):
     repo = Repo(".")
+    
+    try:
+        old_content = repo.git.show(f"origin/main:{file}")
+    except Exception as e:
+        print(f"Couldn't access {file} on origin/main: {str(e)}")
+        return
 
-    old_content = repo.git.show(f"origin/main:{file}")
     new_content = repo.git.show(f"HEAD:{file}")
 
     old_yaml = yaml.safe_load(old_content)
