@@ -25,6 +25,8 @@ pipeline:
 
   - runs: |
       set -x
+
+      export TEST_GITHUB_ACTION="dud"
       export DESTDIR="${{targets.destdir}}"
       mkdir -p "${DESTDIR}"
 
